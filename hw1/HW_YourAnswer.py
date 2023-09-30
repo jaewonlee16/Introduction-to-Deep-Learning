@@ -19,10 +19,10 @@ def softmax(x):
     #     NOTE : x can be vector or matrix and its sum of each row should be one with given matrix.
     #     2) Prevent the overflow (Do not let your function output the 'NaN')
     #     Check this article for overflow in softmax : https://medium.com/swlh/are-you-messing-with-me-softmax-84397b19f399
-    max_input = np.max(x, axis=1)
+    max_input = np.max(x, axis=1).reshape(-1, 1)
     exponential = np.exp(x - max_input)
     row_sum = np.sum(exponential, axis = 1)
-    softmax_output = exponential / row_sum
+    softmax_output = (exponential.T / row_sum).T
     softmax_output[np.isnan(softmax_output)] = 0
     
     
