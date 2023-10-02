@@ -42,11 +42,13 @@ def cross_entropy_loss(score, target):
     #    - Use delta to prevent the occurence of log(0)
     #    - Return averaged loss w.r.t batch size(N)
     #    - NOTE : score, target can be vector or matrix.
-    
+    softmax_out = softmax(score)
+
+    return -np.sum(target * np.log(score + delta)) / batch_size
         
     # ======================================================================================================
     
-    return CE_loss
+    
 
 def linear_pred(X, weight, bias):
     # 1. Description
@@ -58,9 +60,12 @@ def linear_pred(X, weight, bias):
     #    - Use 'softmax' fuction defined above
     #    - NOTE : bias is included in the weight
     
+    batch_size = X.shape[0]
+    bias_extend = np.tile(bias, (batch_size, 1))
+    pred = X@weight + bias_extend
     
     # ======================================================================================================
-    return pred
+    return softmax(pred)
 
 def linear_cost_func(X, y, weight, bias):
     # 1. Description
@@ -71,8 +76,8 @@ def linear_cost_func(X, y, weight, bias):
     #    - Implement linear classifier which returns softmax value of each class
     #    - Use fuctions defined above
     #    - NOTE : bias is included in the weight
-    
-    
+    score = linear_pred(X, weight, bias)
+    cost = cross_entropy_loss(score, y)
     # ======================================================================================================
     
     return cost
@@ -114,6 +119,12 @@ def batch_gradient_descent_func(X, y, weight, bias, alpha, num_iters):
         #    - Perform a single gradient step on the parameter.
         #    - You should consider "vector multiplication" NOT loop statement.
         
+        h = linear_pred(X, weight, bias)
+        p = h - y
+        gradient = X.T @ p
+        weight = weight - alpha * gradient / n
+        
+        h = linear_pred(X, weight, bias)
         ### =====================================
         J_his[i] = cross_entropy_loss(h, y)
 
@@ -147,6 +158,16 @@ def stochastic_gradient_descent_func(X, y, weight, bias, alpha, num_iters, mini_
         #   - Use variable 'mini-batch'
         # 2) With selected batch, calculate its gradient using "vector multiplication" NOT loop statement.
         
+        random_index= np.random.choice(n, mini_batch, replace=True)
+        x_random = X[random_index]
+        y_random = y[random_index]
+
+        h = linear_pred(x_random, weight, bias)
+        p = h - y_random
+        gradient = x_random.T @ p
+        weight = weight - alpha * gradient / mini_batch
+        
+
         ### =====================================
         J_his[i] = cross_entropy_loss(linear_pred(X, weight, bias), y)
     return weight, bias, J_his, W_his
