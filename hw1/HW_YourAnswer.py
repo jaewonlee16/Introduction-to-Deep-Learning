@@ -197,6 +197,9 @@ class OutputLayer:
         #    - Compute cross entropy loss using given x, y
         #    - NOTE: Remember that the values in the forward propagation phase would be needed at the backward propagation phase)
                
+        self.output_softmax = softmax(x)
+        self.target_label = y
+        self.loss = cross_entropy_loss(self.output_softmax, self.target_label)
         # ======================================================================================================
     
         return self.loss
@@ -221,9 +224,10 @@ class OutputLayer:
         #    - NOTE : ds should be divided by batch_size 
         #    - HINT : Calculate the derivative of the loss with respect to the 'softmax output') 
         
+        ds = self.output_softmax - self.target_label
         # ======================================================================================================
         
-        return ds
+        return ds / batch_size
     
     
 class ReLU:
@@ -248,6 +252,8 @@ class ReLU:
         # Instructions :
         #    - Implement ReLU function with given x (All the negative values should be ignored)
         #    - HINT : Think which value to save for the backward propagation phase
+        self.mask = x > 0
+        out = x * self.mask
 
         # ======================================================================================================
     
@@ -268,6 +274,7 @@ class ReLU:
         # Instructions :
         #    - dout is the propagation value from the upper layer
         #    - Only the points that had survived during the forward propagation should be backward propagated
+        dx = dout * self.mask
 
         # ======================================================================================================
         
@@ -292,10 +299,11 @@ class Sigmoid:
         # Instructions :
         #    - Implement sigmoid function
         #    - Make sure that the output is in the range of 0 to 1
+        self.out = 1 / (1 + np.exp(-x))
 
         # ======================================================================================================
     
-        return out
+        return self.out
     
     def backward(self, dout):
         # 1. Description
@@ -313,7 +321,7 @@ class Sigmoid:
         # Instructions :
         #    - dout is the propagation value from the upper layer
         #    - Consider the derivative of the sigmoid function
-
+        dx = self.out * (1 - self.out) * dout
         # ======================================================================================================
         
         return dx
@@ -322,7 +330,7 @@ class Affine:
     
     def __init__(self, W, b):
         
-        # NOTE : bias is considered seperately !!
+        # : bias is considered seperately !!
         
         self.W = W
         self.b = b
@@ -348,6 +356,8 @@ class Affine:
         #    - Implement an Affine layer
         #    - NOTE : bias should be considered separately ! (Not included in self.W)
         #    - Consider the backward propagation phase
+        self.x = x
+        out = self.x @ self.W + np.tile(self.b, (self.x.shape[0], 1))
         
         # ======================================================================================================
     
@@ -373,6 +383,9 @@ class Affine:
         #             (dW and db will be used when weights are updated)
         #             - dW : (D_1, D_2)
         #             - db : (1, D_2)
+        dx = dout @ self.W.T
+        self.dW = self.x.T @ dout
+        self.db = np.sum(dout, axis = 0)
         
 
         # ======================================================================================================
