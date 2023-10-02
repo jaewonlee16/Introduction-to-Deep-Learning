@@ -446,6 +446,9 @@ class TwoLayerNet:
         #     - NOTE: OrderedDict() remembers the order entries were added
         #     - Model Structure would be like
         #       " Input => Fully Connected => ReLU => Fully Connected => OutputLayer "
+        self.layers['FC1'] = Affine(self.params['W1'], self.params['b1'])
+        self.layers['ReLU'] = ReLU()
+        self.layers['FC2'] = Affine(self.params['W2'], self.params['b2'])
         
 
         # ======================================================================================================
@@ -464,6 +467,8 @@ class TwoLayerNet:
         # Instructions :
         #     - Forward propagate TwolayerNet to return output score (not probability)
         #     - HINT : the code only requires 2 lines
+        x = self.layers['FC2'].forward(self.layers['ReLU'].forward(self.layers['FC1'].forward(x)))
+        #x = self.lastLayer.forward(x, )
 
         
         # ======================================================================================================    
@@ -489,7 +494,9 @@ class TwoLayerNet:
         #       - Implement L2 Regularization if self.reg is not 0
         #         (Multiply 0.5 to the reg_loss for computational convenience)
         #       - Use 'self.reg' as a regularization constant
+        weight_squared = np.power(self.params['W1'], 2).sum() + np.power(self.params['W2'], 2).sum() 
 
+        loss = self.lastLayer.forward(self.predict(x), y) + self.reg * 0.5 * weight_squared
 
         # ===================================================================================================== #             
         return loss
@@ -550,6 +557,13 @@ class TwoLayerNet:
         #     2) add (param name, param gradient) pair in grads
         #       - save the computed gradient values of each layer during backpropagation
         #       - gradients of L2 regularization should also be considered !
+        second2last_grad = self.layers['ReLU'].backward(self.layers['FC2'].backward(self.lastLayer.backward()))
+        self.grads['W2'] = self.reg * self.params['W2'] + self.layers['FC2'].dW
+        self.grads['b2'] = self.layers['FC2'].db
+
+        _ = self.layers['FC1'].backward(second2last_grad)
+        self.grads['W1'] = self.reg * self.params['W1'] + self.layers['FC1'].dW
+        self.grads['b1'] = self.layers['FC1'].db
         
 
         
@@ -567,6 +581,7 @@ class TwoLayerNet:
     
         # Instructions :
         #     - Update weights by gradient descent
-            
+        for key in self.params:
+            self.params[key] = self.params[key] - learning_rate * self.grads[key]
+        print(f"{self.params['W1'] = }")    
         # ===================================================================================================== #
-        return
