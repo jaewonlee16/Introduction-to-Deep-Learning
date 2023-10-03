@@ -469,6 +469,7 @@ class TwoLayerNet:
         #     - HINT : the code only requires 2 lines
         x = self.layers['FC2'].forward(self.layers['ReLU'].forward(self.layers['FC1'].forward(x)))
         #x = self.lastLayer.forward(x, )
+        x = softmax(x)
 
         
         # ======================================================================================================    
@@ -496,7 +497,7 @@ class TwoLayerNet:
         #       - Use 'self.reg' as a regularization constant
         weight_squared = np.power(self.params['W1'], 2).sum() + np.power(self.params['W2'], 2).sum() 
 
-        loss = self.lastLayer.forward(self.predict(x), y) + self.reg * 0.5 * weight_squared
+        loss = self.lastLayer.forward(self.layers['FC2'].forward(self.layers['ReLU'].forward(self.layers['FC1'].forward(x))), y) + self.reg * 0.5 * weight_squared
 
         # ===================================================================================================== #             
         return loss
@@ -540,7 +541,7 @@ class TwoLayerNet:
         #               (ex) self.grads['W1'] = dL/dW1          (D_1, D_2)
 
         # [STEP 1] forward propagation
-        self.loss(x, y)
+        _ = self.loss(x, y)
 
         # [STEP 2] backward propagation & save gradients for each params in 'grads'
     
