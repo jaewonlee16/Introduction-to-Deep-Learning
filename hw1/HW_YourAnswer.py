@@ -583,5 +583,5 @@ class TwoLayerNet:
         #     - Update weights by gradient descent
         for key in self.params:
             self.params[key] = self.params[key] - learning_rate * self.grads[key]
-        print(f"{self.params['W1'] = }")    
+        #print(f"{self.params['W1'] = }")    
         # ===================================================================================================== #
