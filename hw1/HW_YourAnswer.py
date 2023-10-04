@@ -123,8 +123,8 @@ def batch_gradient_descent_func(X, y, weight, bias, alpha, num_iters):
         p = h - y
         gradient = X.T @ p
         weight = weight - alpha * gradient / n
+        bias = bias - alpha * np.sum(p, axis = 0) / n
         
-        h = linear_pred(X, weight, bias)
         ### =====================================
         J_his[i] = cross_entropy_loss(h, y)
 
@@ -166,6 +166,7 @@ def stochastic_gradient_descent_func(X, y, weight, bias, alpha, num_iters, mini_
         p = h - y_random
         gradient = x_random.T @ p
         weight = weight - alpha * gradient / mini_batch
+        bias = bias - alpha * np.sum(p, axis = 0) / mini_batch
         
 
         ### =====================================
