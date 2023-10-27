@@ -179,7 +179,7 @@ class Conv(object):
         for i in range(out_shape[1]):
             for j in range(out_shape[2]):
                 x_roi = Conv._find_roi(padded_x[n, :, :, :], i, j, FH, FW, stride)
-                im2col_roi = np.expand_dims(x_roi.reshape(-1), axis = 0).repeat(3, axis=0)
+                im2col_roi = np.expand_dims(x_roi.reshape(-1), axis = 0).repeat(F, axis=0)
                 conv = (im2col_filter * im2col_roi).sum(axis=-1)
                 out[n, i, j, :] = conv + b
 
