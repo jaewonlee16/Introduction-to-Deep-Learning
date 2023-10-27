@@ -26,7 +26,9 @@ class Conv(object):
     # TODO: Implement the extracting roi function for the given input                
     ###########################################################################
     
-    pass
+    position_x = stride * i
+    position_y = stride * j
+    out = x[position_x : position_x + FH, position_y : position_y + FW, :]
     
     ###########################################################################
     #                           END OF YOUR CODE                              #
@@ -67,9 +69,39 @@ class Conv(object):
     # You should use `Conv._find_roi` function when implementing              #
     # `Conv.naive_forward` function.                                          #
     ###########################################################################
+
+    pad = conv_param['pad']
+    stride = conv_param['stride']
+
+    padded_x = np.pad(x, ((0, 0), (pad, pad), (pad, pad), (0, 0)), mode = 'constant')
     
+    N, H, W, C = x.shape
+    F , FH, FW, C= w.shape
+
+    # reshape the filter similar to output
+    new_filter = np.zeros((FH, FW, C, F))
+    for f_index, f in enumerate(w):
+        new_filter[:, :, :, f_index] = f
+
+    # reshape input x similar to output
+    new_x = np.expand_dims(padded_x, axis = -1)
+    new_x = new_x.repeat(F, axis = -1)
+
+    # out shape
+    out_shape = (N, 1 + (H + 2 * pad - FH) // stride,1 + (W + 2 * pad - FW) // stride, F)  
+
+    out = np.zeros(out_shape)
+
     
-    pass
+
+    for n in range(N):
+        conv = 0
+        for i in range(out.shape[1]):
+            for j in range(out.shape[2]):
+                x_roi = Conv._find_roi(new_x[n, :], i, j, FH, FW, stride)
+                conv = x_roi * new_filter
+
+                out[n, i, j, :] = conv.sum(axis = 0).sum(axis=0).sum(axis=0) + b
 
 
     ###########################################################################
