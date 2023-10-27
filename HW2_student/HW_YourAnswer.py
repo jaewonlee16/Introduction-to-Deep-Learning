@@ -78,6 +78,7 @@ class Conv(object):
     N, H, W, C = x.shape
     F , FH, FW, C= w.shape
 
+    """
     # reshape the filter similar to output
     new_filter = np.zeros((FH, FW, C, F))
     for f_index, f in enumerate(w):
@@ -86,14 +87,16 @@ class Conv(object):
     # reshape input x similar to output
     new_x = np.expand_dims(padded_x, axis = -1)
     new_x = new_x.repeat(F, axis = -1)
+    """
 
     # out shape
     out_shape = (N, 1 + (H + 2 * pad - FH) // stride,1 + (W + 2 * pad - FW) // stride, F)  
 
     out = np.zeros(out_shape)
 
-    
 
+
+    """
     for n in range(N):
         conv = 0
         for i in range(out.shape[1]):
@@ -103,6 +106,16 @@ class Conv(object):
 
                 out[n, i, j, :] = conv.sum(axis = 0).sum(axis=0).sum(axis=0) + b
 
+    """
+
+    for n in range(N):
+        for i in range(out.shape[1]):
+            for j in range(out.shape[2]):
+                for f in range(F):
+                    x_roi = Conv._find_roi(padded_x[n, :, :, :], i, j, FH, FW, stride)
+                    conv = x_roi * w[f, :, :, :]
+                    c_sum = conv.sum(axis = 0).sum(axis = 0)
+                    out[n, i, j, f] = (c_sum).sum(axis=0) + b[f]
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
