@@ -159,10 +159,31 @@ class Conv(object):
     # You should use `Conv._find_roi` function when implementing              #
     # `Conv.forward` function.                                                #
     ###########################################################################
+    pad = conv_param['pad']
+    stride = conv_param['stride']
+
+    padded_x = np.pad(x, ((0, 0), (pad, pad), (pad, pad), (0, 0)), mode = 'constant')
+    
+    N, H, W, C = x.shape
+    F , FH, FW, C= w.shape
+
+    im2col_filter = w.reshape(F, -1)    
     
     
-    pass
+    # out shape
+    out_shape = (N, 1 + (H + 2 * pad - FH) // stride,1 + (W + 2 * pad - FW) // stride, F)  
+
+    out = np.zeros(out_shape)
     
+    for n in range(N):
+        for i in range(out_shape[1]):
+            for j in range(out_shape[2]):
+                x_roi = Conv._find_roi(padded_x[n, :, :, :], i, j, FH, FW, stride)
+                im2col_roi = np.expand_dims(x_roi.reshape(-1), axis = 0).repeat(3, axis=0)
+                conv = (im2col_filter * im2col_roi).sum(axis=-1)
+                out[n, i, j, :] = conv + b
+
+
     
     
     ###########################################################################
