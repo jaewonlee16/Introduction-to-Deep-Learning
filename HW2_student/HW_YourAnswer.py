@@ -227,16 +227,26 @@ class Conv(object):
     OH = dout.shape[1]
     OW = dout.shape[2]
     
-    dw = np.zeros(w.shape)
+    dw = 0
     dx_padded = np.zeros(padded_x.shape)
     db = np.zeros(b.shape)
+
+    w_im2col = w.reshape(F, -1).T
+
     for n in range(N):
         for i in range(OH):
             for j in range(OW):
-                for f in range(F):
-                    dw[f, :, :, :] += padded_x[n, i : i + FH * stride: stride, j : j + FW * stride: stride, :] * dout[n, i, j, f]
-                    db[f] += dout[n, i, j, f]
-                    dx_padded[n, i * stride : i * stride + FH, j * stride : j *stride + FW, :] += w[f, :, :, :] * dout [n, i, j, f]
+                # dw
+                dout_im2col = dout[n, i, j, :]
+                x_flat = np.expand_dims(padded_x[n, i : i + FH * stride: stride, j : j + FW * stride: stride, :], axis=-1).repeat(F, axis=-1)
+                x_flat = x_flat.reshape(-1, F)
+                dw += ((x_flat * dout_im2col).T).reshape(w.shape)
+
+                #db
+                db += dout_im2col
+
+                #dx
+                dx_padded[n, i * stride : i * stride + FH, j * stride : j *stride + FW, :] += (w_im2col * dout_im2col).sum(axis=-1).reshape(w.shape[1:])
 
     dx = dx_padded[:, pad : H + pad, pad : W + pad, :]
     
