@@ -213,9 +213,32 @@ class Conv(object):
     # if you consider it, you will have a chance to earn the bonus point      #
     ###########################################################################
     
+    x = cache[0]
+    w = cache[1]
+    b = cache[2]
+    pad = cache[3]['pad']
+    stride = cache[3]['stride']
+
+    padded_x = np.pad(x, ((0, 0), (pad, pad), (pad, pad), (0, 0)), mode = 'constant')
     
-    pass
+    N, H, W, C = x.shape
+    F , FH, FW, C= w.shape
+
+    OH = dout.shape[1]
+    OW = dout.shape[2]
     
+    dw = np.zeros(w.shape)
+    dx_padded = np.zeros(padded_x.shape)
+    db = np.zeros(b.shape)
+    for n in range(N):
+        for i in range(OH):
+            for j in range(OW):
+                for f in range(F):
+                    dw[f, :, :, :] += padded_x[n, i : i + FH * stride: stride, j : j + FW * stride: stride, :] * dout[n, i, j, f]
+                    db[f] += dout[n, i, j, f]
+                    dx_padded[n, i * stride : i * stride + FH, j * stride : j *stride + FW, :] += w[f, :, :, :] * dout [n, i, j, f]
+
+    dx = dx_padded[:, pad : H + pad, pad : W + pad, :]
     
     ###########################################################################
     #                             END OF YOUR CODE                            #
