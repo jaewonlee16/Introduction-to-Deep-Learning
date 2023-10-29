@@ -281,7 +281,25 @@ class Pooling(object):
     # but, if you consider it, you will have a chance to earn the bonus point #
     ###########################################################################
     
-    pass
+    pool_size = pool_param['pool_size']
+    stride = pool_param['stride']
+    if pool_param['pool_type'] == 'avg':
+        pool_type = getattr(np, 'average')
+    else:
+        pool_type = getattr(np, pool_param['pool_type'])
+
+    N, H, W, C = x.shape
+    H_prime = 1 + (H - pool_size) // stride
+    W_prime = 1 + (W - pool_size) // stride
+
+    out = np.zeros((N, H_prime, W_prime, C), dtype=np.float64)
+    for n in range(N):
+        for i in range(H_prime):
+            for j in range(W_prime):
+
+                out[n, i, j, :] = pool_type(x[n, i * stride : i * stride + pool_size, j * stride : j * stride + pool_size, :], axis = (0, 1))
+
+    
     
     ###########################################################################
     #                             END OF YOUR CODE                            #
