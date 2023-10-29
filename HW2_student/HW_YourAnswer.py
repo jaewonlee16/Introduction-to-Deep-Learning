@@ -325,7 +325,32 @@ class Pooling(object):
     # but, if you consider it, you will have a chance to earn the bonus point #
     ###########################################################################
     
-    pass
+    x , pool_param = cache
+    pool_size = pool_param['pool_size']
+    stride = pool_param['stride']
+
+    N, H, W, C = x.shape
+    H_prime = 1 + (H - pool_size) // stride
+    W_prime = 1 + (W - pool_size) // stride
+
+    dx = np.zeros_like(x)
+    denominator = pool_size * pool_size
+
+    if pool_param['pool_type'] == 'max':
+        for n in range(N):
+            for i in range(H_prime):
+                for j in range(W_prime):
+                    pooled_x = x[n, i * stride : i * stride + pool_size, j * stride : j * stride + pool_size, :]
+                    argmax = pooled_x == np.max(pooled_x, axis=(0, 1))
+                    dx[n, i * stride : i * stride + pool_size, j * stride : j * stride + pool_size, :] += dout[n, i, j, :] * argmax
+
+    else:
+        for n in range(N):
+            for i in range(H_prime):
+                for j in range(W_prime):
+                    dx[n, i * stride : i * stride + pool_size, j * stride : j * stride + pool_size, :] \
+                        += np.full((pool_size, pool_size, C), dout[n, i, j, :]) / denominator
+
 
                     
     ###########################################################################
