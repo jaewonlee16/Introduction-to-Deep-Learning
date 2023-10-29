@@ -377,8 +377,10 @@ class BatchNorm(object):
         #################################WRITE YOUR CODE#############################################
         # TODO: Implement the function for computing the mean and variance of the input data.      
         #############################################################################################
+
+        means = np.mean(x, axis=axis)
+        vars = np.var(x, axis=axis)
         
-        pass
 
         
         #############################################################################################
@@ -404,8 +406,11 @@ class BatchNorm(object):
         #################################WRITE YOUR CODE#############################################
         # TODO: Implement the function for normalizing the data      
         #############################################################################################
+
+        out = (x-means) / np.sqrt(vars + eps)
+
+
         
-        pass
         
         #############################################################################################
         #                             END OF YOUR CODE                            
@@ -430,7 +435,7 @@ class BatchNorm(object):
         # TODO: Implement the function for scaling and shifting the data 
         #############################################################################################
 
-        pass
+        out = x * gamma + beta
 
         #############################################################################################
         #                             END OF YOUR CODE                            
@@ -485,7 +490,16 @@ class BatchNorm(object):
             #  You should use above functions (_compute_means_and_vars, _normalize_data, _scale_and_shift)
             ##########################################################################################
             
-            pass
+            mean, var = BatchNorm._compute_means_and_vars(x, 0)
+            x_normalized = BatchNorm._normalize_data(x, mean, var, eps)
+            out = BatchNorm._scale_and_shift(x_normalized, gamma, beta)
+
+            # momentum
+            running_mean = momentum * running_mean + (1 - momentum) * mean
+            running_var = momentum * running_var + (1 - momentum) * var
+
+            #cache
+            cache = (x, x_normalized, mean, var, gamma, beta, eps)
             
             ###########################################################################################
             #                                  END OF YOUR CODE                            
@@ -498,6 +512,8 @@ class BatchNorm(object):
             # - Store the result in the out variable.                               
             ###########################################################################################
             
+            x_normalized = BatchNorm._normalize_data(x, running_mean, running_var, eps)
+            out = BatchNorm._scale_and_shift(x_normalized, gamma, beta)
             pass
         
             ###########################################################################################
@@ -531,8 +547,31 @@ class BatchNorm(object):
         # TODO: Implement the backward pass for spatial batch normalization.      #
         #                                                                         #
         ###########################################################################
+        x, x_normalized, mean, var, gamma, beta, eps = cache
+        N , H, W, C = x.shape
+
+        dgamma = (dout * x_normalized).sum(axis=0).sum(axis=0).sum(axis=0)
+        dbeta = dout.sum(axis=0).sum(axis=0).sum(axis=0)
+
+        dx_normalized = dout * gamma
+
+        dx_mu1 = dx_normalized / np.sqrt(var + eps)
+
+        print(f"{var.shape=}")
         
-        pass
+
+        dvar = np.sum(dx_normalized * (x - mean) * (-0.5) * np.power(var + eps, -1.5), axis=0)
+        print(f"{dvar.shape=}")
+        
+        dx_mu2 = 2 * (x - mean) * np.expand_dims(dvar, axis=0).repeat(N, axis=0) / N
+        
+
+        dmean = - np.sum(dx_mu1 + dx_mu2, axis=0)
+        dmean2 = np.sum(dx_normalized * (-1.0) / np.sqrt(var + eps), axis=0) + dvar * np.mean(-2.0 * (x - mean), axis=0)
+        dx = dx_mu1 + dx_mu2 + np.expand_dims(dmean, axis=0).repeat(N, axis=0) / N
+
+
+        
     
         ###########################################################################
         #                             END OF YOUR CODE                            #
