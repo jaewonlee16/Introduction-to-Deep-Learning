@@ -490,7 +490,7 @@ class BatchNorm(object):
             #  You should use above functions (_compute_means_and_vars, _normalize_data, _scale_and_shift)
             ##########################################################################################
             
-            mean, var = BatchNorm._compute_means_and_vars(x, 0)
+            mean, var = BatchNorm._compute_means_and_vars(x, (0, 1, 2))
             x_normalized = BatchNorm._normalize_data(x, mean, var, eps)
             out = BatchNorm._scale_and_shift(x_normalized, gamma, beta)
 
@@ -549,6 +549,7 @@ class BatchNorm(object):
         ###########################################################################
         x, x_normalized, mean, var, gamma, beta, eps = cache
         N , H, W, C = x.shape
+        m = N * H * W
 
         dgamma = (dout * x_normalized).sum(axis=0).sum(axis=0).sum(axis=0)
         dbeta = dout.sum(axis=0).sum(axis=0).sum(axis=0)
@@ -557,18 +558,13 @@ class BatchNorm(object):
 
         dx_mu1 = dx_normalized / np.sqrt(var + eps)
 
-        print(f"{var.shape=}")
         
 
-        dvar = np.sum(dx_normalized * (x - mean) * (-0.5) * np.power(var + eps, -1.5), axis=0)
-        print(f"{dvar.shape=}")
-        
-        dx_mu2 = 2 * (x - mean) * np.expand_dims(dvar, axis=0).repeat(N, axis=0) / N
+        dvar = np.sum(dx_normalized * (x - mean) * (-0.5) * np.power(var + eps, -1.5), axis=(0, 1, 2))
         
 
-        dmean = - np.sum(dx_mu1 + dx_mu2, axis=0)
-        dmean2 = np.sum(dx_normalized * (-1.0) / np.sqrt(var + eps), axis=0) + dvar * np.mean(-2.0 * (x - mean), axis=0)
-        dx = dx_mu1 + dx_mu2 + np.expand_dims(dmean, axis=0).repeat(N, axis=0) / N
+        dmean = np.sum(dx_normalized * (-1.0) / np.sqrt(var + eps), axis=(0, 1, 2)) + dvar * np.mean(-2.0 * (x - mean), axis=(0, 1, 2))
+        dx = dx_normalized / np.sqrt(var + eps) + dvar * 2.0 * (x - mean) / m + dmean / m
 
 
         
