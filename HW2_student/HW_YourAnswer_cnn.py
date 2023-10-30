@@ -63,8 +63,17 @@ class numpy_CNN(object):
         # Here, you can assume that the padding  and stride of the first convolutional layer are #                                         
         # chosen so that **the width and height of the input are preserved**.                    #
         ##########################################################################################
+        H, W, C = input_dim
 
-        pass
+        self.params['W1'] = np.random.normal(0, weight_scale, size=(num_filters, filter_size, filter_size, C))
+        self.params['W2'] = np.random.normal(0, weight_scale, size=(H * W * num_filters // 4, hidden_dim))
+        self.params['W3'] = np.random.normal(0, weight_scale, size=(hidden_dim, num_classes))
+        self.params['b1'] = np.zeros(num_filters)
+        self.params['b2'] = np.zeros(hidden_dim)
+        self.params['b3'] = np.zeros(num_classes)
+        self.params['gamma1'] = np.ones(num_filters)
+        self.params['beta1'] = np.zeros(num_filters)
+
 
         ##########################################################################################
         #                                    END OF YOUR CODE                                    #
@@ -103,8 +112,10 @@ class numpy_CNN(object):
         # computing the class scores for X and storing them in the scores variable.#
         # Hint: You can use functions in helper_functions.py                       #
         ############################################################################
-       
-        pass
+        conv_out, conv_cache \
+                = conv_bn_relu_pool_forward(X, W1, b1, gamma1, beta1, conv_param, pool_param, bn_param)
+        affine_relu_out, affine_relu_cache = affine_relu_forward(conv_out, W2, b2)
+        affine2_out, affine2_cache = affine_forward(affine_relu_out, W3, b3)
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -130,10 +141,21 @@ class numpy_CNN(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-        
-        
-        pass
+        loss, dout = softmax_loss(affine2_out, y)
+        dout, grads['W3'], grads['b3'] = affine_backward(dout, affine2_cache)
+        dout, grads['W2'], grads['b2'] = affine_relu_backward(dout, affine_relu_cache)
+        _, grads['W1'], grads['b1'], grads['gamma1'], grads['beta1'] = conv_bn_relu_pool_backward(dout, conv_cache)
 
+        # regularization
+        weight_squared = np.power(self.params['W1'], 2).sum() \
+            + np.power(self.params['W2'], 2).sum() + np.power(self.params['W3'], 2).sum()
+        loss = loss + self.reg * 0.5 * weight_squared
+
+        grads['W1'] += self.reg * self.params['W1']
+        grads['W2'] += self.reg * self.params['W2']
+        grads['W3'] += self.reg * self.params['W3']
+        
+        
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
