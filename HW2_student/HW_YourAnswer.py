@@ -553,8 +553,8 @@ class BatchNorm(object):
         N , H, W, C = x.shape
         m = N * H * W
 
-        dgamma = (dout * x_normalized).sum(axis=0).sum(axis=0).sum(axis=0)
-        dbeta = dout.sum(axis=0).sum(axis=0).sum(axis=0)
+        dgamma = (dout * x_normalized).sum(axis=(0, 1, 2))
+        dbeta = dout.sum(axis=(0, 1, 2))
 
         dx_normalized = dout * gamma
 
