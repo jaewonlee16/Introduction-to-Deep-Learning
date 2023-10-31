@@ -169,6 +169,7 @@ class Conv(object):
 
     im2col_filter = w.reshape(F, -1)    
     
+    im2col_roi = np.zeros((F, FH * FW * C))
     
     # out shape
     out_shape = (N, 1 + (H + 2 * pad - FH) // stride,1 + (W + 2 * pad - FW) // stride, F)  
@@ -179,7 +180,7 @@ class Conv(object):
         for i in range(out_shape[1]):
             for j in range(out_shape[2]):
                 x_roi = Conv._find_roi(padded_x[n, :, :, :], i, j, FH, FW, stride)
-                im2col_roi = np.expand_dims(x_roi.reshape(-1), axis = 0).repeat(F, axis=0)
+                im2col_roi[:, :] = x_roi.reshape(-1)
                 conv = (im2col_filter * im2col_roi).sum(axis=-1)
                 out[n, i, j, :] = conv + b
 
@@ -233,14 +234,15 @@ class Conv(object):
 
     w_im2col = w.reshape(F, -1).T
 
+    x_flat = np.zeros((F, FH * FW * C))
+
     for n in range(N):
         for i in range(OH):
             for j in range(OW):
                 # dw
                 dout_im2col = dout[n, i, j, :]
-                x_flat = np.expand_dims(padded_x[n, i : i + FH * stride: stride, j : j + FW * stride: stride, :], axis=-1).repeat(F, axis=-1)
-                x_flat = x_flat.reshape(-1, F)
-                dw += ((x_flat * dout_im2col).T).reshape(w.shape)
+                x_flat[:, :] = padded_x[n, i : i + FH * stride: stride, j : j + FW * stride: stride, :].reshape(-1)
+                dw += ((x_flat.T * dout_im2col).T).reshape(w.shape)
 
                 #db
                 db += dout_im2col
