@@ -117,6 +117,8 @@ class numpy_CNN(object):
         affine_relu_out, affine_relu_cache = affine_relu_forward(conv_out, W2, b2)
         affine2_out, affine2_cache = affine_forward(affine_relu_out, W3, b3)
 
+        scores = affine2_out
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
