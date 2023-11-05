@@ -229,29 +229,47 @@ class Conv(object):
     OW = dout.shape[2]
     
     dw = 0
-    dx_padded = np.zeros(padded_x.shape)
+    dx_padded = np.zeros_like(padded_x)
     db = np.zeros(b.shape)
 
     w_im2col = w.reshape(F, -1).T
 
-    x_flat = np.zeros((F, FH * FW * C))
+    w_im2col_expand = np.zeros((N, FH * FW * C, F))
+    w_im2col_expand[:, :, :] = w_im2col[np.newaxis, :, :]
+
+    x_flat = np.zeros((F, N, FH * FW * C))
+    """
 
     for n in range(N):
         for i in range(OH):
             for j in range(OW):
+                
                 # dw
                 dout_im2col = dout[n, i, j, :]
                 x_flat[:, :] = padded_x[n, i : i + FH * stride: stride, j : j + FW * stride: stride, :].reshape(-1)
                 dw += ((x_flat.T * dout_im2col).T).reshape(w.shape)
-
+                
                 #db
                 db += dout_im2col
-
                 #dx
                 dx_padded[n, i * stride : i * stride + FH, j * stride : j *stride + FW, :] += (w_im2col * dout_im2col).sum(axis=-1).reshape(w.shape[1:])
+    """
+
+    for i in range(OH):
+        for j in range(OW):
+            # dw
+            dout_im2col = dout[:, i, j, :]
+            x_flat[:, :, :] = padded_x[:, i : i + FH * stride: stride, j : j + FW * stride: stride, :].reshape(N, -1)
+            dw += ((x_flat.T * dout_im2col).T).sum(axis=1).reshape(w.shape)
+
+            #db
+            db += dout_im2col.sum(axis=0)
+    
+            #dx
+            dx_padded[:, i * stride : i * stride + FH, j * stride : j *stride + FW, :] \
+                += (w_im2col * dout_im2col[:, np.newaxis, :]).sum(axis=-1).reshape((N, *w.shape[1:]))
 
     dx = dx_padded[:, pad : H + pad, pad : W + pad, :]
-    
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
