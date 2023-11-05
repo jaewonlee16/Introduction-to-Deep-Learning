@@ -228,8 +228,8 @@ class Conv(object):
     OH = dout.shape[1]
     OW = dout.shape[2]
     
-    dw = 0
-    dx_padded = np.zeros(padded_x.shape)
+    dw = np.zeros_like(w)
+    dx_padded = np.zeros_like(padded_x)
     db = np.zeros(b.shape)
 
     w_im2col = w.reshape(F, -1).T
@@ -248,7 +248,7 @@ class Conv(object):
                 db += dout_im2col
 
                 #dx
-                dx_padded[n, i * stride : i * stride + FH, j * stride : j *stride + FW, :] += (w_im2col * dout_im2col).sum(axis=-1).reshape(w.shape[1:])
+                dx_padded[n, i * stride : i * stride + FH, j * stride : j *stride + FW, :] += (w_im2col * dout_im2col).sum(axis=-1).reshape(FH, FW, C)
 
     dx = dx_padded[:, pad : H + pad, pad : W + pad, :]
     
@@ -294,7 +294,7 @@ class Pooling(object):
     H_prime = 1 + (H - pool_size) // stride
     W_prime = 1 + (W - pool_size) // stride
 
-    out = np.zeros((N, H_prime, W_prime, C), dtype=np.float64)
+    out = np.zeros((N, H_prime, W_prime, C), dtype=np.float32)
     for n in range(N):
         for i in range(H_prime):
             for j in range(W_prime):
