@@ -228,8 +228,8 @@ class Conv(object):
     OH = dout.shape[1]
     OW = dout.shape[2]
     
-    dw = np.zeros_like(w)
-    dx_padded = np.zeros_like(padded_x)
+    dw = 0
+    dx_padded = np.zeros(padded_x.shape)
     db = np.zeros(b.shape)
 
     w_im2col = w.reshape(F, -1).T
@@ -248,7 +248,7 @@ class Conv(object):
                 db += dout_im2col
 
                 #dx
-                dx_padded[n, i * stride : i * stride + FH, j * stride : j *stride + FW, :] += (w_im2col * dout_im2col).sum(axis=-1).reshape(FH, FW, C)
+                dx_padded[n, i * stride : i * stride + FH, j * stride : j *stride + FW, :] += (w_im2col * dout_im2col).sum(axis=-1).reshape(w.shape[1:])
 
     dx = dx_padded[:, pad : H + pad, pad : W + pad, :]
     
@@ -337,9 +337,6 @@ class Pooling(object):
 
     dx = np.zeros_like(x)
     denominator = pool_size * pool_size
-    
-    pooled_x = np.zeros((pool_size, pool_size, C))
-    argmax = np.zeros_like(C)
 
     if pool_param['pool_type'] == 'max':
         for n in range(N):
@@ -579,6 +576,3 @@ class BatchNorm(object):
         ###########################################################################
 
         return dx, dgamma, dbeta
-
-
-
