@@ -303,21 +303,22 @@ class Pooling(object):
     
     pool_size = pool_param['pool_size']
     stride = pool_param['stride']
-    if pool_param['pool_type'] == 'avg':
-        pool_type = getattr(np, 'average')
-    else:
-        pool_type = getattr(np, pool_param['pool_type'])
 
     N, H, W, C = x.shape
     H_prime = 1 + (H - pool_size) // stride
     W_prime = 1 + (W - pool_size) // stride
 
     out = np.zeros((N, H_prime, W_prime, C), dtype=np.float64)
-    for n in range(N):
+
+    if pool_param['pool_type'] == 'max':
         for i in range(H_prime):
             for j in range(W_prime):
+                out[:, i, j, :] = np.max(x[:, i * stride : i * stride + pool_size, j * stride : j * stride + pool_size, :], axis = (1, 2))
+    else:
+        for i in range(H_prime):
+            for j in range(W_prime):
+                out[:, i, j, :] = np.mean(x[:, i * stride : i * stride + pool_size, j * stride : j * stride + pool_size, :], axis = (1, 2))
 
-                out[n, i, j, :] = pool_type(x[n, i * stride : i * stride + pool_size, j * stride : j * stride + pool_size, :], axis = (0, 1))
 
     
     
@@ -355,14 +356,17 @@ class Pooling(object):
 
     dx = np.zeros_like(x)
     denominator = pool_size * pool_size
+    max_x = np.zeros((N, 1, 1, C))
+    dout_expand = np.zeros((N, 1, 1, C))
 
     if pool_param['pool_type'] == 'max':
-        for n in range(N):
-            for i in range(H_prime):
-                for j in range(W_prime):
-                    pooled_x = x[n, i * stride : i * stride + pool_size, j * stride : j * stride + pool_size, :]
-                    argmax = pooled_x == np.max(pooled_x, axis=(0, 1))
-                    dx[n, i * stride : i * stride + pool_size, j * stride : j * stride + pool_size, :] += dout[n, i, j, :] * argmax
+        for i in range(H_prime):
+            for j in range(W_prime):
+                pooled_x = x[:, i * stride : i * stride + pool_size, j * stride : j * stride + pool_size, :]
+                max_x[:, 0, 0, :] = np.max(pooled_x, axis=(1, 2))
+                argmax = (pooled_x == max_x)
+                dout_expand[:, 0, 0, :] = dout[:, i, j, :]
+                dx[:, i * stride : i * stride + pool_size, j * stride : j * stride + pool_size, :] += dout_expand * argmax
 
     else:
         for n in range(N):
