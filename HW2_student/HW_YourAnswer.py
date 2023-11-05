@@ -238,7 +238,7 @@ class Conv(object):
     padded_x_flat = np.zeros(FH * FW * C)
 
     dout_im2col = np.zeros(F)
-    dw_flat = np.zeross((FH * FW * C, F))
+    dw_flat = np.zeros((FH * FW * C, F))
 
     dx_padded_flat = np.zeros_like(x_flat)
 
