@@ -228,27 +228,36 @@ class Conv(object):
     OH = dout.shape[1]
     OW = dout.shape[2]
     
-    dw = 0
-    dx_padded = np.zeros(padded_x.shape)
+    dw = np.zeros_like(w)
+    dx_padded = np.zeros_like(padded_x)
     db = np.zeros(b.shape)
 
     w_im2col = w.reshape(F, -1).T
 
     x_flat = np.zeros((F, FH * FW * C))
+    padded_x_flat = np.zeros(FH * FW * C)
+
+    dout_im2col = np.zeros(F)
+    dw_flat = np.zeross((FH * FW * C, F))
+
+    dx_padded_flat = np.zeros_like(x_flat)
 
     for n in range(N):
         for i in range(OH):
             for j in range(OW):
                 # dw
                 dout_im2col = dout[n, i, j, :]
-                x_flat[:, :] = padded_x[n, i : i + FH * stride: stride, j : j + FW * stride: stride, :].reshape(-1)
-                dw += ((x_flat.T * dout_im2col).T).reshape(w.shape)
+                padded_x_flat = padded_x[n, i : i + FH * stride: stride, j : j + FW * stride: stride, :].reshape(-1)
+                x_flat[:, :] = = padded_x_flat
+                dw_flat = x_flat.T * dout_im2col
+                dw += (dw_flat.T).reshape(w.shape)
 
                 #db
                 db += dout_im2col
 
                 #dx
-                dx_padded[n, i * stride : i * stride + FH, j * stride : j *stride + FW, :] += (w_im2col * dout_im2col).sum(axis=-1).reshape(w.shape[1:])
+                dx_padded_flat = w_im2col * dout_im2col
+                dx_padded[n, i * stride : i * stride + FH, j * stride : j *stride + FW, :] += dx_padded_flat.sum(axis=-1).reshape(FH, FW, C)
 
     dx = dx_padded[:, pad : H + pad, pad : W + pad, :]
     
