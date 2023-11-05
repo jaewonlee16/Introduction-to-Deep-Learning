@@ -294,7 +294,7 @@ class Pooling(object):
     H_prime = 1 + (H - pool_size) // stride
     W_prime = 1 + (W - pool_size) // stride
 
-    out = np.zeros((N, H_prime, W_prime, C), dtype=np.float32)
+    out = np.zeros((N, H_prime, W_prime, C), dtype=np.float64)
     for n in range(N):
         for i in range(H_prime):
             for j in range(W_prime):
