@@ -337,6 +337,9 @@ class Pooling(object):
 
     dx = np.zeros_like(x)
     denominator = pool_size * pool_size
+    
+    pooled_x = np.zeros(pool_size, pool_size, C)
+    argmax = np.zeros_like(C)
 
     if pool_param['pool_type'] == 'max':
         for n in range(N):
