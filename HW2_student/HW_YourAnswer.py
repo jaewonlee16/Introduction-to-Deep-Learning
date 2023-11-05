@@ -248,7 +248,7 @@ class Conv(object):
                 # dw
                 dout_im2col = dout[n, i, j, :]
                 padded_x_flat = padded_x[n, i : i + FH * stride: stride, j : j + FW * stride: stride, :].reshape(-1)
-                x_flat[:, :] = = padded_x_flat
+                x_flat[:, :] = padded_x_flat
                 dw_flat = x_flat.T * dout_im2col
                 dw += (dw_flat.T).reshape(w.shape)
 
