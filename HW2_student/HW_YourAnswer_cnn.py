@@ -201,8 +201,28 @@ class pytorch_CNN(nn.Module):
         # Second Linear Layer: size of each output sample= 4096, followed by ReLU activation
         # Output Layer: size of each output sample= #(classes)
         # ========================================== WRITE YOUR CODE ========================================== #
+        self.conv_layer1 = nn.Sequential(
+            nn.Conv2d(3, 6, kernel_size = 5, padding = 1),
+            nn.BatchNorm2d(6),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2)
+        )
+
+        self.conv_layer2 = nn.Sequential(
+            nn.Conv2d(6, 16, kernel_size = 5, padding = 1),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2)
+        )
+
+        self.linear_layer = nn.Sequential(
+            nn.Linear(16 * 6 * 6, 4096),
+            nn.ReLU(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(),
+            nn.Linear(4096, 10)
+        )
        
-        pass
     
         # ===================================================================================================== #
 
@@ -212,8 +232,10 @@ class pytorch_CNN(nn.Module):
         ########################################################################################################
         # TODO: Implement forward pass of pytorch_CNN 
         #########################################################################################################
-        
-        pass
+        x = self.conv_layer1(x)
+        x = self.conv_layer2(x)
+        x = x.view(x.size(0), -1)
+        output = self.linear_layer(x)
         
         ##########################################################################################################
         return output
