@@ -122,6 +122,13 @@ class MultiLayerRNN(nn.Module):
         # - Initialize a list 'rnn' containing OneLayerRNN instances.
         # - The list is then passed to nn.Sequential to create a sequential RNN model.
         # ========================================== WRITE YOUR CODE ========================================== #
+        layers = []
+        for _ in range(self.num_layers):
+            l = OneLayerRNN(input_size = self.input_size, hidden_size = self.hidden_size, nonlinearity = nonlinearity)
+            layers.append(l)
+
+        self.rnn = nn.Sequential(*layers)
+
 
 
 
@@ -160,11 +167,15 @@ class MultiLayerRNN(nn.Module):
         # ========================================== WRITE YOUR CODE ========================================== #
 
 
+        out = x_seq
+        h_last = torch.zeros([self.num_layers, n_batch, self.hidden_size]).to(x_seq)
+
+        for i_layer in range(self.num_layers):
+            h_init_layer = h_init[i_layer] if h_init is not None else None
+            out, h_last[i_layer, :, :] = self.rnn[i_layer](out, h_init_layer)
 
 
-
-
-
+        return out, h_last
 
 
 
