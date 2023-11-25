@@ -76,7 +76,7 @@ class OneLayerRNN(nn.Module):
         # - The final hidden state 'h' is updated after each time step.
         # - 'output' is stacked along the sequence dimension to form the output sequence.
         # ========================================== WRITE YOUR CODE ========================================== #
-        output = torch.zeros([n_batch, n_seq, self.input_size]).to(x_seq)
+        output = torch.zeros([n_batch, n_seq, self.hidden_size]).to(x_seq)
         h_t = h
         for t in range(n_seq):
             x_t = x_seq[:, t, :]
@@ -212,6 +212,8 @@ class OneLayerLSTM(nn.Module):
         # ========================================== WRITE YOUR CODE ========================================== #
 
 
+        self.ih_fc = nn.Linear(self.input_size, 4 * self.hidden_size)
+        self.hh_fc = nn.Linear(self.hidden_size, 4 * self.hidden_size)
 
 
         # ===================================================================================================== #
@@ -245,11 +247,12 @@ class OneLayerLSTM(nn.Module):
         # - Apply activation functions to each gate: sigmoid for i, f, and o, and tanh for g.
         # - These gates control the flow of information in the LSTM cell.
         # ========================================== WRITE YOUR CODE ========================================== #
+        i, f, g, o = torch.split(ih + hh, hidden_size, dim = -1)
 
-
-
-
-
+        i = torch.sigmoid(i)
+        f = torch.sigmoid(f)
+        g = torch.tanh(g)
+        o = torch.sigmoid(o)
 
         # ===================================================================================================== #
 
@@ -289,15 +292,22 @@ class OneLayerLSTM(nn.Module):
         # - 'output' is stacked along the sequence dimension to form the output sequence.
         # ========================================== WRITE YOUR CODE ========================================== #
         
+        # zero-state
+        h_t = h # h_0
+        c_t = c # c_0
 
 
+        h_out = torch.zeros([n_batch, n_seq, self.hidden_size]).to(x_seq)
+        for t in range(n_seq):
+            x_t = x_seq[:, t, :]
+            i_t, f_t, g_t, o_t = self.linear(x_t, h_t)
+            c_t = f_t * c_t + i_t * g_t
+            h_t = o_t * torch.tanh(c_t)
+            h_out[:, t, :] = h_t
 
 
+        return h_out, (h_t, c_t)
 
-
-
-
-    
         # ===================================================================================================== #
 
 
