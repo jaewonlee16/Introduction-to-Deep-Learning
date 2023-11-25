@@ -130,11 +130,6 @@ class MultiLayerRNN(nn.Module):
         self.rnn = nn.Sequential(*layers)
 
 
-
-
-
-
-
         # ===================================================================================================== #
 
     
@@ -176,9 +171,6 @@ class MultiLayerRNN(nn.Module):
 
 
         return out, h_last
-
-
-
 
     
         # ===================================================================================================== #
@@ -338,8 +330,12 @@ class MultiLayerLSTM(nn.Module):
         # ========================================== WRITE YOUR CODE ========================================== #
 
 
+        layers = []
+        for _ in range(self.num_layers):
+            l = OneLayerLSTM(input_size = self.input_size, hidden_size = self.hidden_size)
+            layers.append(l)
 
-
+        self.lstm = nn.Sequential(*layers)
 
 
         # ===================================================================================================== #
@@ -373,19 +369,20 @@ class MultiLayerLSTM(nn.Module):
         # ========================================== WRITE YOUR CODE ========================================== #
 
 
+        out = x_seq
+        h_last = torch.zeros([self.num_layers, n_batch, self.hidden_size]).to(x_seq)
+        c_last = torch.zeros([self.num_layers, n_batch, self.hidden_size]).to(x_seq)
+
+        for i_layer in range(self.num_layers):
+            # h_0 and c_0
+            h_init_layer = init[0][i_layer] if init is not None else None
+            c_init_layer = init[1][i_layer] if init is not None else None
+
+            out, (h_last[i_layer, :, :], c_last[i_layer, :, :]) = self.lstm[i_layer](out, (h_init_layer, c_init_layer))
 
 
+        return out, (h_last, c_last)
 
-
-
-
-
-
-
-
-
-
-    
         # ===================================================================================================== #
 
 class MultiheadAttention(nn.Module):
