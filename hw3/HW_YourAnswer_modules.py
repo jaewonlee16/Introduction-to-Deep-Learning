@@ -38,6 +38,8 @@ class OneLayerRNN(nn.Module):
         # - Initialize the hidden-to-hidden linear layer (hh_fc) with hidden_size for both input and output.
         #   This layer captures the recurrence in the RNN by mapping the current hidden state to the next one.
         # ========================================== WRITE YOUR CODE ========================================== #
+        self.ih_fc = nn.Linear(self.input_size, self.hidden_size)
+        self.hh_fc = nn.Linear(self.hidden_size, self.hidden_size)
 
 
 
@@ -74,6 +76,15 @@ class OneLayerRNN(nn.Module):
         # - The final hidden state 'h' is updated after each time step.
         # - 'output' is stacked along the sequence dimension to form the output sequence.
         # ========================================== WRITE YOUR CODE ========================================== #
+        output = torch.zeros([n_batch, n_seq, self.input_size]).to(x_seq)
+        h_t = h
+        for t in range(n_seq):
+            x_t = x_seq[:, t, :]
+            h_t = self.nonlinearity(self.ih_fc(x_t) + self.hh_fc(h_t))
+            output[:, t, :] = h_t
+
+        return output, h_t
+
 
 
 
