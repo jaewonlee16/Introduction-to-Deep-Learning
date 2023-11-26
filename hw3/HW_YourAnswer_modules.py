@@ -420,10 +420,10 @@ class MultiheadAttention(nn.Module):
         # - Initialize the output projection (out_proj) with output embed_dim.
         # ========================================== WRITE YOUR CODE ========================================== #
 
-
-
-
-
+        self.q_proj = nn.Linear(embed_dim, embed_dim)
+        self.k_proj = nn.Linear(self.kdim, embed_dim)
+        self.v_proj = nn.Linear(self.vdim, embed_dim)
+        self.out_proj = nn.Linear(embed_dim, embed_dim)
 
         # ===================================================================================================== #
 
@@ -453,6 +453,10 @@ class MultiheadAttention(nn.Module):
         # - Transpose the dimensions to get the desired shape (B, num_heads, -1, embed_dim // num_heads).
         # ========================================== WRITE YOUR CODE ========================================== #
 
+        x = x.view(n_batch, -1, self.num_heads, self.embed_dim // self.num_heads)
+
+        # Transpose the dimensions to get the desired shape (B, num_heads, -1, embed_dim // num_heads)
+        return x.transpose(1, 2)
 
 
         # ===================================================================================================== #
@@ -500,13 +504,29 @@ class MultiheadAttention(nn.Module):
         softmax @ v: (B, num_heads, n_seq, embed_dim // num_heads)
         """
 
+        wk = wk.transpose(2, 3)
 
+        # Perform matrix multiplication between query wq and transposed key wk
+        scores = torch.matmul(wq, wk)
 
+        # Scale the result by the square root of d_k
+        scores /= torch.sqrt(torch.tensor(d_k, dtype=torch.float32))
 
+        # Apply the padding mask if provided
+        if pad_mask is not None:
+            scores = scores.masked_fill(pad_mask.unsqueeze(1).unsqueeze(2), float('-inf'))
 
+        # Apply the softmax activation along the key dimension
+        attn_weights = nn.functional.softmax(scores, dim=-1)
 
+        # Calculate the average attention weight
+        avg_attn_weights = attn_weights.mean(dim=1)
 
+        # Perform matrix multiplication between the attention scores and value tensor wv
+        x = torch.matmul(attn_weights, wv)
 
+        # Transpose the result to the original shape
+        x = x.transpose(1, 2).contiguous().view(n_batch, -1, self.embed_dim)
 
 
     
@@ -546,6 +566,22 @@ class MultiheadAttention(nn.Module):
         pad_mask: (B, n_key)
         """
 
+        wq = self.q_proj(q)
+        wk = self.k_proj(k)
+        wv = self.v_proj(v)
+
+        # Split the tensors into multiple heads
+        wq = self.split_heads(wq)
+        wk = self.split_heads(wk)
+        wv = self.split_heads(wv)
+
+        # Use the scaled_dot_product_attention method to perform scaled dot-product attention
+        x, weight = self.scaled_dot_product_attention(wq, wk, wv, pad_mask)
+
+        # Linearly project the output tensor 'x' using the linear projection layer 'self.out_proj'
+        x = self.out_proj(x)
+
+        return x, weight
 
 
 
