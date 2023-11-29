@@ -453,6 +453,7 @@ class MultiheadAttention(nn.Module):
         # - Transpose the dimensions to get the desired shape (B, num_heads, -1, embed_dim // num_heads).
         # ========================================== WRITE YOUR CODE ========================================== #
 
+        # - Reshape the input tensor x to have shape (B, -1, num_heads, embed_dim // num_heads).
         x = x.view(n_batch, -1, self.num_heads, self.embed_dim // self.num_heads)
 
         # Transpose the dimensions to get the desired shape (B, num_heads, -1, embed_dim // num_heads)
@@ -504,6 +505,7 @@ class MultiheadAttention(nn.Module):
         softmax @ v: (B, num_heads, n_seq, embed_dim // num_heads)
         """
 
+        # - Transpose the key tensor wk to shape (B, num_heads, embed_dim // num_heads, n_key).
         wk = wk.transpose(2, 3)
 
         # Perform matrix multiplication between query wq and transposed key wk
@@ -514,7 +516,8 @@ class MultiheadAttention(nn.Module):
 
         # Apply the padding mask if provided
         if pad_mask is not None:
-            scores = scores.masked_fill(pad_mask.unsqueeze(1).unsqueeze(2), float('-inf'))
+            scores = scores.masked_fill(pad_mask.unsqueeze(1).unsqueeze(2), -1e9)
+
 
         # Apply the softmax activation along the key dimension
         attn_weights = nn.functional.softmax(scores, dim=-1)
@@ -528,6 +531,8 @@ class MultiheadAttention(nn.Module):
         # Transpose the result to the original shape
         x = x.transpose(1, 2).contiguous().view(n_batch, -1, self.embed_dim)
 
+
+        return x, avg_attn_weights
 
     
         # ===================================================================================================== #
@@ -566,11 +571,11 @@ class MultiheadAttention(nn.Module):
         pad_mask: (B, n_key)
         """
 
+        # - Linearly project the query, key, value tensors using the linear projection layers.
         wq = self.q_proj(q)
         wk = self.k_proj(k)
         wv = self.v_proj(v)
 
-        # Split the tensors into multiple heads
         wq = self.split_heads(wq)
         wk = self.split_heads(wk)
         wv = self.split_heads(wv)
@@ -580,14 +585,9 @@ class MultiheadAttention(nn.Module):
 
         # Linearly project the output tensor 'x' using the linear projection layer 'self.out_proj'
         x = self.out_proj(x)
+        #print(f"{x[0]=}")
 
         return x, weight
 
-
-
-
-
-    
         # ===================================================================================================== #
 
-        return None
