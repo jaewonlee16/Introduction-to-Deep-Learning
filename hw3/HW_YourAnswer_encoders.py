@@ -40,14 +40,14 @@ class RNNEncoder(nn.Module):
         # ========================================== WRITE YOUR CODE ========================================== #
 
 
-
-
-
-
-
-
-
-
+        self.embedding = nn.Embedding(num_tokens, embedding_dim)
+        self.rnn = nn.RNN(input_size = embedding_dim,
+                          hidden_size = hidden_dim,
+                          num_layers = num_layers,
+                          nonlinearity = nonlinearity,
+                          batch_first = True
+                          )
+        self.linear_classifier = nn.Linear(hidden_dim, 2)
 
         # ===================================================================================================== #
 
@@ -74,9 +74,12 @@ class RNNEncoder(nn.Module):
         # ========================================== WRITE YOUR CODE ========================================== #
 
 
+        embedded = self.embedding(text)
+        output, _ = self.rnn(embedded)
+        x = self.linear_classifier(output[:, -1, :])
 
+        return x
 
-    
         # ===================================================================================================== #
 
         return None
