@@ -321,6 +321,18 @@ class TransformerEncoder(nn.Module):
         # - Reshape 'pos_enc' and add a singleton dimension at the beginning for the broadcasting.
         # ========================================== WRITE YOUR CODE ========================================== #
 
+        # - Create a tensor 'pos_enc' with zeros of shape (max_pos_len, embedding_dim).
+        pos_enc = torch.zeros(max_pos_len, embedding_dim)
+
+        # Calculate sinusoidal positional encoding and assign values to the tensor
+        position = torch.arange(0, max_pos_len).unsqueeze(1).float()
+        #div_term = torch.exp(torch.arange(0, embedding_dim, 2).float() * -(torch.log(torch.tensor(10000.0)) / embedding_dim))
+        div_term = 1 / torch.pow(10000, torch.arange(0, embedding_dim, 2)) / embedding_dim
+        pos_enc[:, 0::2] = torch.sin(position * div_term)
+        pos_enc[:, 1::2] = torch.cos(position * div_term)
+
+        # Reshape 'pos_enc' and add a singleton dimension at the beginning for broadcasting
+        pos_enc = pos_enc.unsqueeze(0)
 
 
 
