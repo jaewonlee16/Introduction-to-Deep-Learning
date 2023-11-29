@@ -4,6 +4,8 @@
 practice.ipynb
 github_commit.ipynb
 *.zip
+/hw3/aclImdb/*
+/hw3/snapshot/*
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
