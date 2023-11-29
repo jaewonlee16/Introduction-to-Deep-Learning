@@ -115,14 +115,13 @@ class LSTMEncoder(nn.Module):
         # - Initialize the binary linear classifier layer (self.linear_classifier) with input size 'hidden_dim' and output size 2.
         # ========================================== WRITE YOUR CODE ========================================== #
 
-
-
-
-
-
-
-
-
+        self.embedding = nn.Embedding(num_tokens, embedding_dim)
+        self.lstm = nn.LSTM(input_size = embedding_dim,
+                          hidden_size = hidden_dim,
+                          num_layers = num_layers,
+                          batch_first = True
+                          )
+        self.linear_classifier = nn.Linear(hidden_dim, 2)
 
         # ===================================================================================================== #
 
@@ -148,9 +147,11 @@ class LSTMEncoder(nn.Module):
         # - Use the final hidden state as input to the linear classifier layer and return the result.
         # ========================================== WRITE YOUR CODE ========================================== #
 
+        embedded = self.embedding(text)
+        output, _ = self.lstm(embedded)
+        x = self.linear_classifier(output[:, -1, :])
 
-
-
+        return x
     
         # ===================================================================================================== #
 
