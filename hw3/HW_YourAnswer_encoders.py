@@ -179,9 +179,8 @@ class FeedForward(nn.Module):
         # - Initialize the second linear layer (self.linear2) with input size '4 * embedding_dim' and output size 'embedding_dim'.
         # ========================================== WRITE YOUR CODE ========================================== #
 
-
-
-
+        self.linear1 = nn.Linear(embedding_dim, 4 * embedding_dim)
+        self.linear2 = nn.Linear(4 * embedding_dim, embedding_dim)
 
         # ===================================================================================================== #
 
@@ -205,10 +204,11 @@ class FeedForward(nn.Module):
         # - Return the output tensor.
         # ========================================== WRITE YOUR CODE ========================================== #
 
+        x = self.linear1(x)
+        x = nn.ReLU(x)
+        x = self.linear2(x)
 
-
-
-
+        return x
     
         # ===================================================================================================== #
 
