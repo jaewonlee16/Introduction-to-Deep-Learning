@@ -180,6 +180,7 @@ class FeedForward(nn.Module):
         # ========================================== WRITE YOUR CODE ========================================== #
 
         self.linear1 = nn.Linear(embedding_dim, 4 * embedding_dim)
+        self.relu = nn.ReLU()
         self.linear2 = nn.Linear(4 * embedding_dim, embedding_dim)
 
         # ===================================================================================================== #
@@ -205,7 +206,7 @@ class FeedForward(nn.Module):
         # ========================================== WRITE YOUR CODE ========================================== #
 
         x = self.linear1(x)
-        x = nn.ReLU(x)
+        x = self.relu(x)
         x = self.linear2(x)
 
         return x
@@ -238,8 +239,11 @@ class EncoderBlock(nn.Module):
         #   Set the 'embedding_dim' parameter to 'embedding_dim'.
         # ========================================== WRITE YOUR CODE ========================================== #
 
-
-
+        self.attention = nn.MultiheadAttention(embed_dim = embedding_dim, 
+                                               num_heads = num_heads,
+                                               batch_first = True
+                                               )
+        self.feedforward = FeedForward(embedding_dim)
 
         # ===================================================================================================== #
 
@@ -266,10 +270,24 @@ class EncoderBlock(nn.Module):
         # ========================================== WRITE YOUR CODE ========================================== #
 
 
+        # - Pass the input tensor through the attention layer, obtaining the first residual (res1).
+        res1, _ = self.attention(query = x,
+                              key = x,
+                              value = x,
+                              key_padding_mask = mask
+                              )
 
+        # - Add res1 to the input tensor.
+        x = x + res1
 
+        # - Pass the result through the feedforward layer, obtaining the second residual (res2).
+        res2 = self.feedforward(x)
 
+        # - Add res2 to the previous result.
+        x = x + res2
 
+        # - Return the final output tensor.
+        return x
     
         # ===================================================================================================== #
 
@@ -303,11 +321,9 @@ class TransformerEncoder(nn.Module):
         # - Initialize the linear classifier layer (self.linear_classifier) with input size 'hidden_dim' and output size 2.
         # ========================================== WRITE YOUR CODE ========================================== #
 
-
-
-
-
-
+        self.embedding = nn.Embedding(num_tokens, embedding_dim)
+        self.encoders = nn.ModuleList([EncoderBlock(embedding_dim, num_heads=8) for _ in range(num_layers)])
+        self.linear_classifier = nn.Linear(hidden_dim, 2)
 
         # ===================================================================================================== #
 
@@ -361,13 +377,21 @@ class TransformerEncoder(nn.Module):
         # ========================================== WRITE YOUR CODE ========================================== #
 
 
+        # - Perform the forward pass by first embedding the input sequence using the embedding layer.
+        embedded = self.embedding(text)
 
+        # - Add the positional encoding to the embedded sequence.
+        x = embedded + self.pos_enc[:, :embedded.size(1), :]
 
+        # - Pass the sequence through each encoder block in the 'encoders' sequential module.
+        for layer in self.encoders:
+            x = layer(x, mask = pad_mask)
 
+        # - Extract the output from the first position in the sequence.
+        first_position = x[:, 0, :]
 
-
-
-
+        # - Return the result after passing through the linear classifier layer.
+        return self.linear_classifier(first_position)
     
         # ===================================================================================================== #
 
