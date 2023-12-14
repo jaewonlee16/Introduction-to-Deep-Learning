@@ -35,6 +35,21 @@ class Encoder(nn.Module):
         #           Use Linear layer to get latent mean `self.fc_mean` and log variance `fc_logvar` for each
         #           dimension of latent vector
         ############### YOUR CODE HERE ###############
+
+        layers = []
+        for h_dim in hidden_dims:
+            layers.append(
+                nn.Sequential(
+                    nn.Conv2d(in_channels, out_channels=h_dim, kernel_size=4, stride=2, padding=1),
+                    nn.LeakyReLU()
+                )
+            )
+            in_channels = h_dim
+
+        self.model = nn.Sequential(*layers)
+
+        self.fc_mean = nn.Linear(hidden_dims[-1], latent_dim)
+        self.fc_logvar = nn.Linear(hidden_dims[-1], latent_dim)
         
         ############### YOUR CODE HERE ###############
         ##############################################
@@ -56,6 +71,7 @@ class Encoder(nn.Module):
         # Detail : Fill in the code to reparametrize the latent vector                         
         #          Use reparametrization trick                                   
         ############### YOUR CODE HERE ###############
+        rp = mu + eps * torch.exp(0.5 * logvar)
         
         ############### YOUR CODE HERE ###############
         ##############################################
@@ -85,6 +101,25 @@ class Encoder(nn.Module):
         #          use reparametrize function to get reparametrized latent vector for VAE
         #          use self.fc_mean as last layer for AE            
         ############### YOUR CODE HERE ###############
+        # Forward pass through Convolutional Layers
+        x = self.model(x)
+
+        # Flatten the output for Fully Connected Layers
+        x = x.view(x.size(0), -1)
+
+        # Compute Mean and Log Variance
+        mu = self.fc_mean(x)
+        logvar = self.fc_logvar(x)
+
+        if self.model_name == 'VAE':
+            # Reparametrize for VAE
+            if eps is None:
+                eps = self.sample_noise(logvar)
+            rp = self.reparametrize(mu, logvar, eps)
+            return mu, logvar, rp
+        elif self.model_name == 'AE':
+            # Return the output for AE
+            return mu
         
         ############### YOUR CODE HERE ###############
         ##############################################
