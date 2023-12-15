@@ -39,12 +39,10 @@ class Encoder(nn.Module):
         layers = []
         for h_dim in hidden_dims:
             layers.append(
-                nn.Sequential(
-                    nn.Conv2d(in_channels, out_channels=h_dim, kernel_size=4, stride=2, padding=1),
-                    nn.LeakyReLU()
-                )
+                nn.Conv2d(in_channels, out_channels=h_dim, kernel_size=4, stride=2, padding=1),
             )
             in_channels = h_dim
+            layers.append(nn.LeakyReLU())
 
         self.model = nn.Sequential(*layers)
 
@@ -103,7 +101,6 @@ class Encoder(nn.Module):
         ############### YOUR CODE HERE ###############
         # Forward pass through Convolutional Layers
         x = self.model(x)
-        print(f"{x.shape=}")
 
         # Flatten the output for Fully Connected Layers
         x = x.view(x.size(0), -1)
@@ -171,15 +168,16 @@ class Decoder(nn.Module):
         decoder_layers = []
         for i in range(len(hidden_dims) - 1, 0, -1):
             decoder_layers.append(
-                nn.Sequential(
-                    nn.ConvTranspose2d(hidden_dims[i], hidden_dims[i - 1], kernel_size=4, stride=2, padding=1),
-                    nn.LeakyReLU()
-                )
+                nn.ConvTranspose2d(hidden_dims[i], hidden_dims[i - 1], kernel_size=4, stride=2, padding=1),
             )
+            decoder_layers.append(nn.LeakyReLU())
         self.decoder = nn.Sequential(*decoder_layers)
 
         # Define the last layer
-        self.last_layer = nn.ConvTranspose2d(hidden_dims[0], 1, kernel_size=3, stride=1, padding=1)
+        self.last_layer = nn.Sequential(
+                nn.ConvTranspose2d(hidden_dims[0], 1, kernel_size=3, stride=1, padding=1),
+                nn.Sigmoid()
+        )
         
         ############### YOUR CODE HERE ###############
         ##############################################
