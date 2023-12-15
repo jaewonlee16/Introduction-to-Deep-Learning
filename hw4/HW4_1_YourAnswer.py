@@ -103,6 +103,7 @@ class Encoder(nn.Module):
         ############### YOUR CODE HERE ###############
         # Forward pass through Convolutional Layers
         x = self.model(x)
+        print(f"{x.shape=}")
 
         # Flatten the output for Fully Connected Layers
         x = x.view(x.size(0), -1)
@@ -163,6 +164,22 @@ class Decoder(nn.Module):
         #                - out channels : 1
         #           - Use Sigmoid activation function
         ############### YOUR CODE HERE ###############
+        # Define the input layer
+        self.input_layer = nn.Linear(latent_dim, hidden_dims[-1] * (expand_dim ** 2))
+
+        # Define the decoder layers
+        decoder_layers = []
+        for i in range(len(hidden_dims) - 1, 0, -1):
+            decoder_layers.append(
+                nn.Sequential(
+                    nn.ConvTranspose2d(hidden_dims[i], hidden_dims[i - 1], kernel_size=4, stride=2, padding=1),
+                    nn.LeakyReLU()
+                )
+            )
+        self.decoder = nn.Sequential(*decoder_layers)
+
+        # Define the last layer
+        self.last_layer = nn.ConvTranspose2d(hidden_dims[0], 1, kernel_size=3, stride=1, padding=1)
         
         ############### YOUR CODE HERE ###############
         ##############################################
@@ -183,6 +200,18 @@ class Decoder(nn.Module):
         #          and reshape the output with (B, self.hidden_dims[-1], self.expand_dim, self.expand_dim) 
         #          Then, forward the output to self.decoder and self.last_layer      
         ############### YOUR CODE HERE ###############
+        out = self.input_layer(x)
+
+        # Reshape the output
+        out = out.view(x.size(0), self.hidden_dims[-1], self.expand_dim, self.expand_dim)
+
+        # Forward pass through decoder
+        out = self.decoder(out)
+
+        # Forward pass through the last layer
+        out = self.last_layer(out)
+
+        return out
         
         ############### YOUR CODE HERE ###############
         ##############################################
@@ -206,6 +235,7 @@ def reconstruction_loss(recon_x, x):
     # Don't use torch.nn.functional or other package functions which compute the loss directly            
     ############### YOUR CODE HERE ###############
     
+    loss = -torch.sum(x * torch.log(torch.clamp(recon_x, min=1e-10)) + (1 - x) * torch.log(torch.clamp(1 - recon_x, min=1e-10)))
     ############### YOUR CODE HERE ###############
     ##############################################
     loss = loss / batch_size
@@ -228,7 +258,7 @@ def KLD_loss(mu, logvar):
     # Don't use torch.nn.functional or other package functions which compute the loss directly
     # Detail :  Think about KL Divergence
     ############### YOUR CODE HERE ###############
-    
+    kld_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     ############### YOUR CODE HERE ###############
     ##############################################
     kld_loss = kld_loss / batch_size
@@ -258,6 +288,9 @@ def loss_function(recon_x, x, mu, logvar,beta=1,return_info=False):
     # Detail :  Think about ELBO loss for beta-VAE
     ############### YOUR CODE HERE ###############
     
+    Recon_loss = reconstruction_loss(recon_x, x)
+    kld_loss = KLD_loss(mu, logvar)
+    loss = Recon_loss + beta * kld_loss
     ############### YOUR CODE HERE ###############
     ##############################################
     if return_info:
