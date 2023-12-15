@@ -317,6 +317,10 @@ class dataloader(torch.utils.data.Dataset):
         #               - Resize image to 16x16
         #               - ToTensor
         ############### YOUR CODE HERE ###############
+        self.transform = transforms.Compose([
+            transforms.Resize(size=16, antialias=None),
+            transforms.ToTensor()
+        ])
         
         ############### YOUR CODE HERE ###############
         ##############################################
@@ -329,6 +333,9 @@ class dataloader(torch.utils.data.Dataset):
         #          Set download=True for the dataset
         #            Set root='./data' for the dataset
         ############### YOUR CODE HERE ###############
+        self.dataset = torchvision.datasets.MNIST(
+            root='./data', train=train, transform=self.transform, download=True
+        )
 
         ############### YOUR CODE HERE ###############
         ##############################################
@@ -341,6 +348,9 @@ class dataloader(torch.utils.data.Dataset):
         #         Set shuffle is applied for the train dataloader, but not for the test dataloader
         #         Set drop_last=True for the dataloader
         ############### YOUR CODE HERE ###############
+        self.dataloader = torch.utils.data.DataLoader(
+            self.dataset, batch_size=self.batch_size, shuffle=train, drop_last=True
+        )
         
         ############### YOUR CODE HERE ###############
         ##############################################
@@ -398,6 +408,7 @@ class training_VAE:
         # Detail : Use Adam optimizer with learning rate self.lr 
         #           Include encoder and decoder parameters for optimization
         ############### YOUR CODE HERE ###############
+        self.optimizer = torch.optim.Adam(list(encoder.parameters()) + list(decoder.parameters()), lr=self.lr)
 
         ############### YOUR CODE HERE ###############
         ##############################################  
@@ -448,6 +459,28 @@ class training_VAE:
         #          use loss_function function with return_info = True
         #          Backpropagate the loss and update the encoder and decoder using self.optimizer
         ############### YOUR CODE HERE ###############
+        self.optimizer.zero_grad()
+
+        # Forward pass
+        if self.model_name == 'AE':
+            rp = self.encoder(images)
+        elif 'VAE' in self.model_name:
+            mean, logvar, rp = self.encoder(images, eps)
+
+        fake_images = self.decoder(rp)
+
+        # Calculate loss
+        if self.model_name == 'AE':
+            recon_loss = reconstruction_loss(fake_images, images)
+            kld_loss = 0
+        elif 'VAE' in self.model_name:
+            recon_loss = reconstruction_loss(fake_images, images)
+            kld_loss = KLD_loss(mean, logvar)
+
+        # Backpropagation
+        loss = recon_loss + self.beta * kld_loss
+        loss.backward()
+        self.optimizer.step()
         
         
         ############### YOUR CODE HERE ###############
@@ -455,8 +488,8 @@ class training_VAE:
 
         return {
                 "recon_loss" : recon_loss.item(),
-                "kld_loss" : kld_loss.item()
-                }
+                "kld_loss" : kld_loss.item() if kld_loss != 0 else 0
+        }
     def get_fake_images(self, image,labels,eps):
         self.encoder.eval()
         self.decoder.eval()
