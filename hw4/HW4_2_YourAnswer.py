@@ -77,6 +77,19 @@ class Discriminator(nn.Module):
         # TODO : Build the discriminator model
         ##############################################
         ############### YOUR CODE HERE ###############
+        self.model = nn.Sequential(
+            nn.Conv2d(nc, 64, kernel_size=1, stride=1, padding=0),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Flatten(),
+            nn.Linear(256 * 4 * 4, 1),
+            nn.Sigmoid()
+        )
         
         ############### YOUR CODE HERE ###############
         ##############################################
@@ -95,6 +108,7 @@ class Discriminator(nn.Module):
         ##############################################
         # Detail : The output of the discriminator should be (batch_size, 1)
         ############### YOUR CODE HERE ###############
+        output = self.model(input)
         
         ############### YOUR CODE HERE ###############
         ##############################################
