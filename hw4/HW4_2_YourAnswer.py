@@ -24,7 +24,20 @@ class Generator(nn.Module):
         # TODO : Build the generator model
         ##############################################
         ############### YOUR CODE HERE ###############
-        
+        self.model = nn.Sequential(
+            nn.Linear(latent_dim, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(inplace=True),
+            nn.Linear(256, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(inplace=True),
+            nn.Linear(512, 1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(inplace=True),
+            nn.Linear(1024, nc * 16 * 16),
+            nn.Tanh()
+        )
+        self.nc = nc
         ############### YOUR CODE HERE ###############
         ##############################################
 
@@ -43,6 +56,8 @@ class Generator(nn.Module):
         # TODO : Implement the forward pass of the generator
         ##############################################
         ############### YOUR CODE HERE ###############
+        generated_img = self.model(input)
+        generated_img = generated_img.view(-1, self.nc, 16, 16)
 
         ############### YOUR CODE HERE ###############
         ##############################################
