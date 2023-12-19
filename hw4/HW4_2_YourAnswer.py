@@ -202,6 +202,21 @@ class cDiscriminator(nn.Module):
         # TODO : Build the conditional discriminator model with the given architecture using nn.Sequential
         ##############################################
         ############### YOUR CODE HERE ###############
+
+        # Embedding layer for labels
+        self.label_embedding = nn.Embedding(num_classes, np.prod(input_shape))
+
+        # Build the conditional discriminator model
+        self.model = nn.Sequential(
+            nn.Linear(np.prod(input_shape) + num_classes * np.prod(input_shape), 1024),  # Adjusted input size
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Linear(1024, 512),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Linear(512, 256),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Linear(256, 1),
+            nn.Sigmoid()
+        )
         
         ############### YOUR CODE HERE ###############
         ##############################################
@@ -212,6 +227,19 @@ class cDiscriminator(nn.Module):
         ##############################################
         # Detail : Forward input into your own model
         ############### YOUR CODE HERE ###############
+
+        # Embedding the label
+        label_embedding = self.label_embedding(label.long())  # Convert label to Long type
+        label_embedding = label_embedding.view(label_embedding.size(0), -1)
+
+        # Flatten the input image
+        input_flat = input.view(input.size(0), -1)
+
+        # Concatenate flattened image and label embeddings
+        input_combined = torch.cat((input_flat, label_embedding), dim=1)
+
+        # Forward pass through the discriminator model
+        output = self.model(input_combined)
         
         ############### YOUR CODE HERE ###############
         ##############################################
