@@ -134,6 +134,21 @@ class cGenerator(nn.Module):
         # TODO : Build the conditional generator model with the given architecture using nn.Sequential
         ##############################################
         ############### YOUR CODE HERE ###############
+        self.label_embedding = nn.Embedding(num_classes, latent_dim)
+
+        self.model = nn.Sequential(
+            nn.Linear(latent_dim + num_classes*latent_dim, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(inplace=True),
+            nn.Linear(256, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(inplace=True),
+            nn.Linear(512, 1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(inplace=True),
+            nn.Linear(1024, self.input_size),
+            nn.Tanh()
+        )
         
         ############### YOUR CODE HERE ###############
         ##############################################
@@ -152,7 +167,19 @@ class cGenerator(nn.Module):
         # Detail : 
         # Forward input into your own model
         ############### YOUR CODE HERE ###############
-        
+
+        # Embedding the label
+        label_embedding = self.label_embedding(label.long())
+        label_embedding = label_embedding.view(batch_size, -1)
+
+        # Concatenate noise and label embeddings
+        input_combined = torch.cat((input, label_embedding), dim=1)
+
+        # Forward pass through the generator model
+        output = self.model(input_combined)
+
+        # Reshape the output to match the desired input shape
+        output = output.view(batch_size, *self.input_shape)
         ############### YOUR CODE HERE ###############
         ##############################################
         return output
