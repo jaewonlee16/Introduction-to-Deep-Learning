@@ -86,7 +86,16 @@ def get_activations(inception_network,images, batch_size, device='cuda'):
     # Iterate over batches and calculate inception features using inception_network
     # Stack and return the calculated inception feature
     ############# YOUR CODE HERE ############
+    
+    inception_activations = []
 
+    with torch.no_grad():
+        for i in range(0, num_images, batch_size):
+            batch_images = images[i:i+batch_size].to(device)
+            activations = inception_network(batch_images)
+            inception_activations.append(activations.to('cpu'))
+
+    inception_activations = torch.cat(inception_activations, dim=0)
     ############# YOUR CODE HERE ############
     #########################################
     assert inception_activations.shape == (num_images, 2048), \
@@ -114,7 +123,9 @@ def get_statistics(inception_network,images, batch_size,device='cuda'):
     # Detail : Consider using get_activations() function
     #        Consider using numpy package for mean and covariance matrix calculation
     ############# YOUR CODE HERE #################
-    
+    activations = get_activations(inception_network, images, batch_size, device)
+    mu = np.mean(activations, axis=0)
+    sigma = np.cov(activations, rowvar=False)
     
     ############# YOUR CODE HERE #################
     ##############################################
@@ -159,6 +170,13 @@ def calculate_frechet_distance(mu1, sigma1, mu2, sigma2):
     #          Consider using numpy package for trace of a matrix (Find the matched function)
     ############### YOUR CODE HERE ###############
 
+    epsilon = 1e-6
+
+    sqrt_term, _ = scipy.linalg.sqrtm(sigma1 @ sigma2, disp=False)
+    if not np.isfinite(sqrt_term).all():
+        sqrt_term = np.real(sqrt_term)
+
+    FID = np.sum((mu1 - mu2)**2) + np.trace(sigma1 + sigma2 - 2 * sqrt_term)
     ############### YOUR CODE HERE ###############
     ##############################################
 
