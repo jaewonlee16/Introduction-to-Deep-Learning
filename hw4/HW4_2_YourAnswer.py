@@ -462,7 +462,7 @@ class training_GAN:
         fake_images = self.generator(noise)
 
         # Feed the fake images into the discriminator and get the probability of the fake images
-        fake_predictions = self.discriminator(fake_images, label)
+        fake_predictions = self.discriminator(fake_images)
 
         # Calculate generator loss
         loss_G = loss_function(fake_predictions, label='real')  # Generator wants to fool the discriminator
