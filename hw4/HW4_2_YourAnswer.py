@@ -263,6 +263,10 @@ class dataloader(torch.utils.data.Dataset):
         # Detail : Use torchvision.transforms.Compose for the transform
         #          You need to define your own transform.
         ############### YOUR CODE HERE ###############
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean = (0.5, 0.5, 0.5), std = (0.5, 0.5, 0.5))
+        ])
         
         ############### YOUR CODE HERE ###############
         ##############################################
@@ -279,6 +283,10 @@ class dataloader(torch.utils.data.Dataset):
         #          Check the shape of the data
         #          The shape of the data should be (1788, 3, 16, 16)
         ############### YOUR CODE HERE ###############
+        self.dataset = torch.utils.data.TensorDataset(
+            torch.Tensor(data).permute(0, 3, 1, 2).contiguous()/255, 
+            torch.Tensor(label)
+        )
         
         ############### YOUR CODE HERE ###############
         ##############################################
@@ -290,6 +298,11 @@ class dataloader(torch.utils.data.Dataset):
         #         Set batch_size as self.batch_size
         #         Set shuffle is applied for the train dataloader, but not for the test dataloader
         ############### YOUR CODE HERE ###############
+        self.dataloader = torch.utils.data.DataLoader(
+            dataset=self.dataset,
+            batch_size=self.batch_size,
+            shuffle=train
+        )
         
         ############### YOUR CODE HERE ###############
         ##############################################
