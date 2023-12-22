@@ -330,7 +330,7 @@ def loss_function(prob, label='fake'):
     ############### YOUR CODE HERE ###############
     target = torch.zeros_like(prob) if label == 'fake' else torch.ones_like(prob)
 
-    loss = F.binary_cross_entropy(prob, target)
+    loss = nn.functional.binary_cross_entropy(prob, target)
     ############### YOUR CODE HERE ###############
     ##############################################
     assert loss.shape == torch.Size([]), f"loss shape must be torch.Size([]), not {loss.shape}"
@@ -443,10 +443,10 @@ class training_GAN:
         fake_images = self.generator(noise).detach()
 
         # Feed the fake images into the discriminator and get the probability of the fake images
-        fake_predictions = self.discriminator(fake_images, label)
+        fake_predictions = self.discriminator(fake_images)
 
         # Feed the real images into the discriminator and get the probability of the real images
-        real_predictions = self.discriminator(images, label)
+        real_predictions = self.discriminator(images)
 
         # Calculate discriminator loss
         loss_D = loss_function(real_predictions, label='real') + loss_function(fake_predictions, label='fake')
