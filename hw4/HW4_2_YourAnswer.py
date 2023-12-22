@@ -497,7 +497,7 @@ class training_GAN:
         real_predictions = self.discriminator(images)
 
         # Calculate discriminator loss
-        loss_D = loss_function(real_predictions, label='real') + loss_function(fake_predictions, label='fake')
+        loss_D = 0.5*loss_function(real_predictions, label='real') + 0.5*loss_function(fake_predictions, label='fake')
 
         # Backpropagate the loss and update the discriminator
         loss_D.backward()
