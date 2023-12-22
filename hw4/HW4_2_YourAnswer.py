@@ -328,7 +328,9 @@ def loss_function(prob, label='fake'):
     batch_size = prob.shape[0]
     ##############################################
     ############### YOUR CODE HERE ###############
-    
+    target = torch.zeros_like(prob) if label == 'fake' else torch.ones_like(prob)
+
+    loss = F.binary_cross_entropy(prob, target)
     ############### YOUR CODE HERE ###############
     ##############################################
     assert loss.shape == torch.Size([]), f"loss shape must be torch.Size([]), not {loss.shape}"
@@ -379,6 +381,8 @@ class training_GAN:
         ##############################################
         # Detail : Find the proper optimizer in torch.optim
         ############### YOUR CODE HERE ###############
+        self.optimizer_G = torch.optim.Adam(self.generator.parameters(), lr = self.lr, betas = (0.5, 0.999))
+        self.optimizer_D = torch.optim.Adam(self.discriminator.parameters(), lr = self.lr, betas = (0.5, 0.999))
         
         ############### YOUR CODE HERE ###############
         ############################################## 
@@ -427,6 +431,45 @@ class training_GAN:
         #          Calculate the loss ('loss_G')
         #          Backpropagate the loss and update the generator
         ############### YOUR CODE HERE ###############
+
+        # Generate random noise if not provided
+        if noise is None:
+            noise = torch.randn(images.size(0), self.latent_dim, device=self.device)
+
+        # Update the discriminator
+        self.optimizer_D.zero_grad()
+
+        # Generate fake images with no gradient
+        fake_images = self.generator(noise).detach()
+
+        # Feed the fake images into the discriminator and get the probability of the fake images
+        fake_predictions = self.discriminator(fake_images, label)
+
+        # Feed the real images into the discriminator and get the probability of the real images
+        real_predictions = self.discriminator(images, label)
+
+        # Calculate discriminator loss
+        loss_D = loss_function(real_predictions, label='real') + loss_function(fake_predictions, label='fake')
+
+        # Backpropagate the loss and update the discriminator
+        loss_D.backward()
+        self.optimizer_D.step()
+
+        # Update the generator
+        self.optimizer_G.zero_grad()
+
+        # Generate fake images
+        fake_images = self.generator(noise)
+
+        # Feed the fake images into the discriminator and get the probability of the fake images
+        fake_predictions = self.discriminator(fake_images, label)
+
+        # Calculate generator loss
+        loss_G = loss_function(fake_predictions, label='real')  # Generator wants to fool the discriminator
+
+        # Backpropagate the loss and update the generator
+        loss_G.backward()
+        self.optimizer_G.step()
 
         ############### YOUR CODE HERE ###############
         ##############################################
