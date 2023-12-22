@@ -24,6 +24,7 @@ class Generator(nn.Module):
         # TODO : Build the generator model
         ##############################################
         ############### YOUR CODE HERE ###############
+        """
         self.model = nn.Sequential(
             nn.Linear(latent_dim, 256),
             nn.BatchNorm1d(256),
@@ -37,6 +38,39 @@ class Generator(nn.Module):
             nn.Linear(1024, nc * 16 * 16),
             nn.Tanh()
         )
+        """
+        self.linear1 = nn.Sequential(
+                nn.Linear(latent_dim, 1*1*512),
+        )
+
+
+        self.convt2 = nn.Sequential(
+                nn.BatchNorm2d(512),
+                nn.LeakyReLU(0.2, inplace=True),
+                # 1*1
+                nn.ConvTranspose2d(512, 128, kernel_size=4, stride=2, padding=1),
+                nn.BatchNorm2d(128),
+                nn.LeakyReLU(0.2, inplace=True),
+
+                # 2*2
+                nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),
+                nn.BatchNorm2d(64),
+                nn.LeakyReLU(0.2, inplace=True),
+
+                # 4*4
+                nn.ConvTranspose2d(64, 32, kernel_size=4, stride=2, padding=1),
+                nn.BatchNorm2d(32),
+                nn.LeakyReLU(0.2, inplace=True),
+
+                # 8*8
+                nn.ConvTranspose2d(32, 3, kernel_size=4, stride=2, padding=1),
+                nn.BatchNorm2d(3),
+                nn.LeakyReLU(0.2, inplace=True),
+
+                # 16*16
+                nn.Tanh()
+        )
+                
         self.nc = nc
         ############### YOUR CODE HERE ###############
         ##############################################
@@ -56,9 +90,12 @@ class Generator(nn.Module):
         # TODO : Implement the forward pass of the generator
         ##############################################
         ############### YOUR CODE HERE ###############
+        """
         generated_img = self.model(input)
         generated_img = generated_img.view(-1, self.nc, 16, 16)
-
+        """
+        two_dim = self.linear1(input)
+        generated_img = self.convt2(two_dim.unsqueeze(-1).unsqueeze(-1))
         ############### YOUR CODE HERE ###############
         ##############################################
         return generated_img
@@ -78,16 +115,27 @@ class Discriminator(nn.Module):
         ##############################################
         ############### YOUR CODE HERE ###############
         self.model = nn.Sequential(
-            nn.Conv2d(nc, 64, kernel_size=1, stride=1, padding=0),
+            # 16*16
+            nn.Conv2d(nc, 32, kernel_size=4, stride=2, padding=1),
             nn.LeakyReLU(0.2, inplace=True),
+
+            # 8*8
+            nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # 4*4
             nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(128),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(256),
+
+            # 2*2
+            nn.Conv2d(128, 512, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(512),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Flatten(),
-            nn.Linear(256 * 4 * 4, 1),
+            
+            # 1*1
+            nn.Conv2d(512, 1, kernel_size=1, stride=1, padding=0),
             nn.Sigmoid()
         )
         
@@ -108,7 +156,7 @@ class Discriminator(nn.Module):
         ##############################################
         # Detail : The output of the discriminator should be (batch_size, 1)
         ############### YOUR CODE HERE ###############
-        output = self.model(input)
+        output = self.model(input).squeeze(-1).squeeze(-1)
         
         ############### YOUR CODE HERE ###############
         ##############################################
