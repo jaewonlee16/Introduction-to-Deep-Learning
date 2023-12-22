@@ -692,6 +692,48 @@ class training_cGAN(training_GAN):
         #          Backpropagate the loss and update the generator
         ############### YOUR CODE HERE ###############
         
+        # Generate random noise if not provided
+        batch_size = images.shape[0]
+        if noise is None:
+            noise = torch.randn(batch_size, self.latent_dim, device=self.device)
+
+        # Set gradients of discriminator and generator to zero
+        self.optimizer_D.zero_grad()
+        self.optimizer_G.zero_grad()
+
+        # Discriminator update
+        real_images = images.to(self.device)
+        real_labels = label.to(self.device)
+        
+        # Generate fake images from random noise and labels
+        fake_images = self.generator(noise, real_labels)
+
+        # Discriminator outputs for real and fake images
+        real_outputs = self.discriminator(real_images, real_labels)
+        fake_outputs = self.discriminator(fake_images.detach(), real_labels)
+
+        # Calculate discriminator loss
+        loss_D_real = loss_function(real_outputs, label='real')
+        loss_D_fake = loss_function(fake_outputs, label='fake')
+        loss_D = 0.5*loss_D_real + 0.5*loss_D_fake
+
+        # Backpropagate and update discriminator
+        loss_D.backward()
+        self.optimizer_D.step()
+
+        # Generator update
+        # Detail: Feed the random noise and label to the generator and get the fake images
+        #        Then feed the fake images to the discriminator and get the probability of the fake images
+        #        Calculate the loss ('loss_G')
+        #        Backpropagate the loss and update the generator
+        # Calculate generator loss
+        fake_outputs_for_generator = self.discriminator(fake_images, real_labels)
+        loss_G = loss_function(fake_outputs_for_generator, label='real')
+
+        # Backpropagate and update generator
+        loss_G.backward()
+        self.optimizer_G.step()
+
         ############### YOUR CODE HERE ###############
         ##############################################
 
