@@ -39,33 +39,31 @@ class Generator(nn.Module):
             nn.Tanh()
         )
         """
-        self.linear1 = nn.Sequential(
-                nn.Linear(latent_dim, 1*1*512),
-        )
 
 
         self.convt2 = nn.Sequential(
+                nn.Linear(latent_dim, 4*4*512),
+                nn.Unflatten(1, (512, 4, 4)),
                 nn.BatchNorm2d(512),
                 nn.LeakyReLU(0.2, inplace=True),
-                # 1*1
-                nn.ConvTranspose2d(512, 128, kernel_size=4, stride=2, padding=1),
-                nn.BatchNorm2d(128),
-                nn.LeakyReLU(0.2, inplace=True),
-
-                # 2*2
-                nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),
+                # 4*4
+                nn.ConvTranspose2d(512, 64, kernel_size=4, stride=2, padding=1),
                 nn.BatchNorm2d(64),
                 nn.LeakyReLU(0.2, inplace=True),
 
-                # 4*4
-                nn.ConvTranspose2d(64, 32, kernel_size=4, stride=2, padding=1),
-                nn.BatchNorm2d(32),
-                nn.LeakyReLU(0.2, inplace=True),
-
                 # 8*8
-                nn.ConvTranspose2d(32, 3, kernel_size=4, stride=2, padding=1),
+                nn.ConvTranspose2d(64, 3, kernel_size=4, stride=2, padding=1),
                 nn.BatchNorm2d(3),
                 nn.LeakyReLU(0.2, inplace=True),
+
+                # 16*16
+                #nn.ConvTranspose2d(64, 3, kernel_size=4, stride=2, padding=1),
+                #nn.BatchNorm2d(3),
+                #nn.LeakyReLU(0.2, inplace=True),
+                # 8*8
+                #nn.ConvTranspose2d(32, 3, kernel_size=4, stride=2, padding=1),
+                #nn.BatchNorm2d(3),
+                #nn.LeakyReLU(0.2, inplace=True),
 
                 # 16*16
                 nn.Tanh()
@@ -94,8 +92,7 @@ class Generator(nn.Module):
         generated_img = self.model(input)
         generated_img = generated_img.view(-1, self.nc, 16, 16)
         """
-        two_dim = self.linear1(input)
-        generated_img = self.convt2(two_dim.unsqueeze(-1).unsqueeze(-1))
+        generated_img = self.convt2(input)
         ############### YOUR CODE HERE ###############
         ##############################################
         return generated_img
@@ -486,6 +483,7 @@ class training_GAN:
 
         # Update the discriminator
         self.optimizer_D.zero_grad()
+        self.optimizer_G.zero_grad()
 
         # Generate fake images with no gradient
         fake_images = self.generator(noise).detach()
@@ -504,10 +502,6 @@ class training_GAN:
         self.optimizer_D.step()
 
         # Update the generator
-        self.optimizer_G.zero_grad()
-
-        # Generate fake images
-        fake_images = self.generator(noise)
 
         # Feed the fake images into the discriminator and get the probability of the fake images
         fake_predictions = self.discriminator(fake_images)
