@@ -12,8 +12,8 @@ Assignments from SNU ECE Introduction to Deep Learning (M2177.004300)
 
 ## HW3
 - Implementation of RNN, LSTM, Transformers
-- [README](https://github.com/jaewonlee16/Introduction-to-Deep-Learning/blob/master/HW3/readme.md)
+- [README](https://github.com/jaewonlee16/Introduction-to-Deep-Learning/blob/master/hw3/readme.md)
 
 ## HW4
 - Implementation of VAE, GAN
-- [README](https://github.com/jaewonlee16/Introduction-to-Deep-Learning/blob/master/HW4/readme.md)
+- [README](https://github.com/jaewonlee16/Introduction-to-Deep-Learning/blob/master/hw4/readme.md)
